@@ -1,0 +1,189 @@
+#include "hd1650.h"
+#include "stm8s.h"
+#include "swi2c.h"
+#include "dcf77.h"
+#include "extern_variables.h"
+#include <stdio.h>
+//switching between modes
+#define SW_PIN    GPIOC, GPIO_PIN_5
+//time struct
+DCF77_dateTime_t t;
+//save last time
+bool hasTime = false;
+//nonblocking delay
+static uint8_t last_time=0;
+//mode detection
+uint8_t currentMode = 0;
+bool modeChanged = false;
+
+void clock_setup(void);
+void hour_min(void);
+void day_month(void);
+void year(void);
+void seconds(void);
+
+void wait_clock_display(void);
+void main(void)
+{
+	  GPIO_Init(GPIOC, GPIO_PIN_6, GPIO_MODE_IN_FL_NO_IT);//needs to be configured in option bytes as tim1 if using stm8s103!!
+		GPIO_Init(SW_PIN, GPIO_MODE_IN_PU_NO_IT);//switch
+    clock_setup();
+		HD1650_init();
+		HD1650_clearDisplay();
+    HD1650_displayOn();
+		DCF77_Init();
+		while (1){
+        switch (currentMode) {
+            case 0: hour_min(); break;
+            case 1: seconds();  break;
+            case 2: day_month();break;
+            case 3: year();     break;
+				}
+		}
+}
+
+void hour_min(void)
+{
+    modeChanged = false;
+    while (!modeChanged) {
+			  DCF77_Update();
+				visual_handler();
+				if (DCF77_GetTime())//time valid
+        {
+					DCF77_ReadTime(&t);
+					hasTime = true;
+				}
+				if (hasTime){
+					HD1650_writeNumber((t.hours) * 100 + (t.minutes), 0);
+				}
+				else{
+					wait_clock_display();
+				}
+        if (GPIO_ReadInputPin(SW_PIN) == RESET) {
+            while(clock_seconds - last_time >= 0.7){
+							last_time = clock_seconds;
+							modeChanged = true;
+							currentMode = 1;
+							HD1650_clearDisplay();
+						}
+						
+        }
+    }
+}
+void day_month(void)
+{
+    modeChanged = false;
+    while (!modeChanged) {
+        DCF77_Update();
+				visual_handler();
+				if (DCF77_GetTime())//time valid
+        {
+					DCF77_ReadTime(&t);
+					hasTime = true;
+				}
+				if (hasTime){
+					HD1650_writeNumber((t.dayOfMonth) * 100 + (t.months), 0);
+				}
+				else{
+					wait_clock_display();
+				}
+        if (GPIO_ReadInputPin(SW_PIN) == RESET) {
+						while(clock_seconds - last_time >= 0.7){
+							last_time = clock_seconds;
+							modeChanged = true;
+							currentMode = 3;
+							HD1650_clearDisplay();
+						}
+        }
+    }
+}
+
+void year(void)
+{
+    modeChanged = false;
+    while (!modeChanged) {
+			  DCF77_Update();
+				visual_handler();
+				if (DCF77_GetTime())//time valid
+        {
+					DCF77_ReadTime(&t);
+					hasTime = true;
+				}
+				if (hasTime){
+					HD1650_writeNumber(2000+(t.years), 0);//above 2000
+				}
+				else{
+					wait_clock_display();
+				}
+        if (GPIO_ReadInputPin(SW_PIN) == RESET) {
+            while(clock_seconds - last_time >= 0.7){
+							last_time = clock_seconds;
+							modeChanged = true;
+							currentMode = 0;
+							HD1650_clearDisplay();
+						}
+						
+        }
+    }
+}
+
+void seconds(void)
+{
+    modeChanged = false;
+    while (!modeChanged) {
+			  static bool hasTime = false;
+			  DCF77_Update();
+				visual_handler();
+				if (DCF77_GetTime())//time valid
+        {
+					//DCF77_ReadTime(&t);
+					hasTime = true;
+				}
+        HD1650_writeNumber(clock_seconds, 1);//seconds always, even if misaligned
+        if (GPIO_ReadInputPin(SW_PIN) == RESET) {
+            while(clock_seconds - last_time >= 0.7){
+							last_time = clock_seconds;
+							modeChanged = true;
+							currentMode = 2;
+							HD1650_clearDisplay();
+						}
+        }
+    }
+}
+
+void clock_setup(void)
+	{
+		//setup clock for 16 MHz
+    CLK_DeInit();
+                
+    CLK_HSECmd(DISABLE);
+    CLK_LSICmd(DISABLE);
+    CLK_HSICmd(ENABLE);
+    while(CLK_GetFlagStatus(CLK_FLAG_HSIRDY) == FALSE);
+                
+    CLK_ClockSwitchCmd(ENABLE);
+    CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV1);
+    CLK_SYSCLKConfig(CLK_PRESCALER_CPUDIV1);
+                
+    CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSI, 
+    DISABLE, CLK_CURRENTCLOCKSTATE_ENABLE);
+		CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, ENABLE);
+		CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, ENABLE);
+  }
+	
+void wait_clock_display(void)
+	{
+		uint8_t i;
+		for (i=0;i<4;i++){
+			HD1650_sendDigit(0x40, i);//set ----
+		}
+  }
+
+#ifdef USE_FULL_ASSERT
+void assert_failed(u8 *file, u32 line)
+{
+    (void)file;
+    (void)line;
+    while (1) {}
+}
+#endif
