@@ -10,7 +10,7 @@
 #define BIT1_MIN     12500
 #define BIT1_MAX     22000
 //treshold for detection of new frame start 1 tick = 100ms
-#define THRESHOLD_TICK 17 //1.7 sec
+#define THRESHOLD_TICK 17 
 //frame lenght
 #define FRAME_BITS   59
 //for second function in my code (tim4), otherwise disable
