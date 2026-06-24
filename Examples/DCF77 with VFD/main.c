@@ -71,7 +71,7 @@ void main(void)
 									  sync_on_zero_pending = 0;
 										time.h = next_hour;
 										time.m = next_minute;
-										time.s = 59;
+										time.s = 0;
 										PCF8563_set_time();
 										//display_time();//time is displayed in pcf8563
 							}
