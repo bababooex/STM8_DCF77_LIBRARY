@@ -1,7 +1,7 @@
 #include "stm8_pt6311.h"
 #include "stm8s.h"
 #include "swi2c.h"
-#include "dcf77.h"
+#include "stm8_dcf77.h"
 #include "extern_variables.h"
 #include <stdio.h>
 
@@ -98,9 +98,8 @@ void main(void)
 						was_received=0;
 				}
 				if (sync_second >= SYNC_HANDLER){//time might not be correct, syncing continues
-						was_received=0;
 						pt6311_write_string(1,"SC");
-						
+						sync_second=0;
 				}
 			}
 	}
