@@ -68,16 +68,14 @@ void main(void)
         DCF77_Update();//update DCF (needs to run always)
 				if (sync_on_zero_pending) {//sync on first edge
 								if (zero_pulse) {
+									  sync_on_zero_pending = 0;
 										time.h = next_hour;
 										time.m = next_minute;
-										time.s = 0;
+										time.s = 59;
 										PCF8563_set_time();
-										sync_on_zero_pending = 0;
-									    //visual error correctio
-									    PCF8563_get_time();
-										display_time();
+										//display_time();//time is displayed in pcf8563
 							}
-						}
+				}
         if (DCF77_GetTime())
 						{
 								DCF77_ReadTime(&t);
@@ -87,13 +85,11 @@ void main(void)
 								was_received = 1;
 								sync_second = 0;   // reset lost-sync timer
 						}
-						
 				visual_handler();//handle blink each edge
 				if (rtc_second)//update visual secs each second, handled by EXTI
 				{
 							rtc_second = 0;
 							sync_second++;
-							PCF8563_get_time();
 							display_time();//time is displayed in pcf8563
 				}
 				if(was_received==1){
@@ -102,7 +98,6 @@ void main(void)
 				}
 				if (sync_second >= SYNC_HANDLER){//time might not be correct, syncing continues
 						pt6311_write_string(1,"SC");
-						sync_second=0;
 				}
 			}
 	}
