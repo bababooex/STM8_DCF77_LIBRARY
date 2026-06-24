@@ -73,6 +73,9 @@ void main(void)
 										time.s = 0;
 										PCF8563_set_time();
 										sync_on_zero_pending = 0;
+									    //visual error correctio
+									    PCF8563_get_time();
+										display_time();
 							}
 						}
         if (DCF77_GetTime())
