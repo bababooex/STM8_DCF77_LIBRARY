@@ -167,7 +167,6 @@ void pt6311_write_char(uint8_t digit_pos, char chr); //write char to specific po
 void pt6311_write_char_dot(uint8_t digit_pos, char chr, bool dot) ;//write char with dot point
 void pt6311_clock_format(uint8_t digit_pos, uint8_t value,bool colon);//write clock specific 2 digit format
 void pt6311_write_string(uint8_t digit_pos,const char *str); //write string from left to right
-void pt6311_scroll_string(uint8_t digit_pos,const char *str);
 void pt6311_write_int(uint8_t digit_pos,int value); //write int (good for 4 digits max)
 void pt6311_clear_display(void);//clear whole display
 //helpers/testers
