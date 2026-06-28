@@ -15,8 +15,6 @@
 /*
   library for decoding DCF77, tested with DCF77 simulator via flipper zero, but needs filtering via hardware 
   V1.0
-	
-	Library needs external _delay_us() function (like in "delay.h" library). Digit positions start from 1!
  
   How to use this?
 	1. Declare struct DCF77_dateTime_t t, in main, do DCF77_Init(); and enableInterrupts();
